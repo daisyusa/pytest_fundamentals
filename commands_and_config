@@ -1,0 +1,102 @@
+# python -m pytest --help
+
+# run the tests with the --verbose option or -v, pytest prints more data.
+
+# run our tests with the --quiet option or -q, pytest doesn't print the top banner or even the test modules
+
+# To stop running tests after one failure, use the --exitfirst or -x option.
+
+# To stop running tests after a certain number of failures, use the --maxfail argument and set it to however many failures you want to stop after. For example:
+
+
+python -m pytest --maxfail=1
+
+#  One of the most common formats is JUnit's XML report form. pytest includes an option that will generate a JUnit XML file for test results. Simply use --junit-xml and add a report file path like so:
+
+
+python -m pytest --junit-xml report.xml
+
+# Config  - pytest.ini
+
+  [pytest]
+addopts = -v
+
+
+
+
+Like many Python tools, pytest has many powerful command line options to control how it runs. So far, we haven’t used any of them. Let’s start learning them. We won't cover them all in this chapter, but we will cover many important ones.
+
+For starters, you can always learn about pytest's available command line options by using the --help or -h option:
+
+
+python -m pytest --help
+
+As is typical for help commands, pytest will list all available options with descriptions. There are a LOT of options, so it might seem a little overwhelming. pytest will also list options for its available plugins. We'll cover plugins in a later chapter.
+
+When running tests, you can control how much output pytest prints. I'm going to temporarily inject a failure into one of our test cases to demonstrate output differences:
+
+
+def test_one_plus_one():
+  assert 1 + 1 == 0
+
+When we run the tests normally, we expect to see the pytest banner followed by a line for each module with dots and F's for test functions. pytest also outputs the failure introspection for each test.
+
+However, when we run the tests with the --verbose option or -v, pytest prints more data.
+
+At the top, it prints "cachedir" and metadata. It also prints a line for each test case, giving its path, name, and explicit PASSED or FAILED status. Failure introspection is also printed. The list of test case paths makes it easier to see what test cases are failing at a glance.
+
+We can also do the opposite of verbose. When we run our tests with the --quiet option or -q, pytest doesn't print the top banner or even the test modules.
+
+It prints only the dots and the F's. Even though the output is quiet, pytest still prints the failure introspection.
+
+The quiet option is great when you want to avoid polluting your console with too many lines. It's particularly helpful when developing new tests.
+
+pytest also provides a mechanism for stopping test execution after failures happen. By default, pytest will run all tests it finds, no matter how many failures happen. However, you might want to stop execution sooner.
+
+To stop running tests after one failure, use the --exitfirst or -x option.
+
+As soon as the first failure happens, pytest stops.
+
+To stop running tests after a certain number of failures, use the --maxfail argument and set it to however many failures you want to stop after. For example:
+
+
+python -m pytest --maxfail=1
+
+These options can be helpful when debugging test cases so that you don't become overwhelmed by too many failures at once. It can also be helpful when running very large test suites. If, for example, a hundred tests fail in a suite of a thousand, there might be a system-wide problem. Ending that test suite early would speed up the feedback loop and avoid needlessly burning resources for tests that would likely fail.
+
+The pytest console output is helpful when manually triggering tests, but sometimes you might need to save test results to a file. Many tools like Continuous Integration servers need test result files in order to report test results.
+
+One of the most common formats is JUnit's XML report form. pytest includes an option that will generate a JUnit XML file for test results. Simply use --junit-xml and add a report file path like so:
+
+
+python -m pytest --junit-xml report.xml
+
+The report file will look like this:
+
+
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="14" time="0.028" timestamp="2023-06-11T21:23:25.740463" hostname="hiroshige.lan"><testcase classname="tests.test_accum" name="test_accumulator_init" time="0.000" /><testcase classname="tests.test_accum" name="test_accumulator_add_one" time="0.000" /><testcase classname="tests.test_accum" name="test_accumulator_add_three" time="0.000" /><testcase classname="tests.test_accum" name="test_accumulator_add_twice" time="0.000" /><testcase classname="tests.test_accum" name="test_accumulator_cannot_set_count_directly" time="0.000" /><testcase classname="tests.test_math" name="test_one_plus_one" time="0.000"><failure message="assert (1 + 1) == 0">def test_one_plus_one():
+&gt;       assert 1 + 1 == 0
+E       assert (1 + 1) == 0
+tests/test_math.py:5: AssertionError</failure></testcase><testcase classname="tests.test_math" name="test_one_plus_two" time="0.000" /><testcase classname="tests.test_math" name="test_divide_by_zero" time="0.000" /><testcase classname="tests.test_math" name="test_multiplication[2-3-6]" time="0.000" /><testcase classname="tests.test_math" name="test_multiplication[1-99-99]" time="0.000" /><testcase classname="tests.test_math" name="test_multiplication[0-99-0]" time="0.000" /><testcase classname="tests.test_math" name="test_multiplication[3--4--12]" time="0.000" /><testcase classname="tests.test_math" name="test_multiplication[-5--5-25]" time="0.000" /><testcase classname="tests.test_math" name="test_multiplication[2.5-6.7-16.75]" time="0.000" /></testsuite></testsuites>
+
+It’s a standard JUnit XML that any consumer familiar with this format will be able to use.
+
+Now, let's talk about configuration. Command line options are great for running tests in specific ways on the fly. However, there might be some options you want to set more permanently, especially when running tests in a Continuous Integration environment. Some options are not available directly through the command line either.
+
+Thankfully, you can create a configuration file for pytest to specify options in a file rather than on the command line. pytest supports a few different file formats for configuration files. The most common one I've seen is pytest.ini. Whichever format you choose, be sure you follow appropriate conventions. Configuration files should be loaded in the project's root directory.
+
+pytest configuration files support many options. addopts is one of the most useful. It lets you set options directly as they would be entered on the command line. Several other options exist as well, so take time to review them on the pytest docs online.
+
+Let's add a configuration file to our project. Create a new file named pytest.ini in the project root directory. Add the following lines and save the file:
+
+
+[pytest]
+addopts = -v
+
+This option will make every run produce verbose output. Re-run the tests without any command line options, and you’ll see that verbose results were printed anyway. Nice!
+
+There are more pytest options available than we can cover in this course. Please take time to review them on your own. You never know what might be useful for your project!
+
+That's the end of coding for this chapter. Don't forget to undo the failure we deliberately injected at the beginning of the chapter before proceeding to the next chapter.
+
+Python is a command-line-friendly language, and pytest provides a wealth of configurable options for running tests. Check out the docs and the help option to learn about everything you can do. You can even create your own command line options using plugins, which we will cover later.

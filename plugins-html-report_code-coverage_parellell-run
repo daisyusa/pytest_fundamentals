@@ -1,0 +1,96 @@
+One of pytest's best features is its plugin capability. The pytest framework itself is fairly simple. It simply discovers and executes test cases. However, it can be extended using plugins!
+
+A plugin is basically an optional package that adds new capabilities to the framework. In this chapter, we'll cover a few popular plugins, as well as how to write your own plugins.
+
+The first plugin we will cover is pytest-html. When we run pytest tests, the console output is helpful but can be lost quickly after running more tests. Saving results to report files would be a much better approach. Report files are more permanent. They can be shared with a team and stored in some sort of archive. More specifically, HTML reports can be formatted in visually appealing ways and they can also be published to web servers so everyone can view them.
+
+To generate HTML reports from pytest, use the pytest-html plugin. Install it by running the following terminal command:
+
+
+pip install pytest-html
+
+To use it, add the --html option to the command line with a path to a report.
+
+
+python -m pytest --html=report.html
+
+pytest will print the absolute path to the report and its output. You can open it using a web browser.
+
+The report looks like this. It's nothing fancy, but it does capture the basic test result info.
+
+The pytest-html plugin has a few ways to customize reports. Check out its GitHub repository for more information. If you want deeper customization, however, then you'll probably need to create your own plugin for your desired report format.
+
+Another popular plugin is pytest-cov. Code coverage is a very important metric for unit tests. It shows the percentage of product code lines and branches exercised by unit tests. High code coverage means that several code paths are covered by tests. Low code coverage means that there could be significant test gaps.
+
+Python's most popular code coverage tool is called coverage.py. The pytest-cov plugin is essentially a pytest integration for coverage.py with a few extra goodies. To install pytest-cov, run the following terminal command:
+
+
+pip install pytest-cov
+
+To run tests with code coverage, use the --cov option to specify paths to check for coverage. For example, running --cov with the stuff directory will report code coverage only for the Python modules in the stuff package.
+
+
+python -m pytest --cov=stuff
+
+When running tests with code coverage, pytest will print coverage output to the console with one line per module. We could also test multiple directories by adding additional --cov options like this:
+
+
+python -m pytest --cov=stuff --cov=tests
+
+However, that wouldn't make sense for our project. Code coverage should not be run on the tests directory because coverage should be run only for product code.
+
+The command line output is cool, but it's not very helpful for determining where coverage gaps are. Thankfully, pytest-cov can provide more detailed reports.
+
+Let's re-run the last command, but this time, add --cov-report html. This will generate an HTML report for coverage.
+
+
+python -m pytest --cov=stuff --cov-report html
+
+Let’s open the report file in a browser.
+
+The HTML coverage report is very useful. You can click on files to visually see lines in the code that are and are not covered. pytest-cov can also generate HTML and annotation reports. You can even override report names.
+
+Another helpful option for pytest-cov is the --cov-branch option:
+
+
+python -m pytest --cov=stuff --cov-branch
+
+By default, coverage.py will do line-by-line coverage, but it won’t cover any conditionals or branching that happens in your code. So, by testing branch coverage, you’re really getting the most out of your coverage report. Typically, I recommend adding branching as a default option.
+
+The third plugin we will cover is pytest-xdist. By default, pytest runs tests one at a time. This is okay for small test suites but it can become very slow for large test suites, especially for feature tests.
+
+Running tests in parallel is a great way to reduce the total start-to-end execution time for test suites. The pytest-xdist plugin lets you run pytest tests in parallel. To install it, run the following terminal command:
+
+
+pip install pytest-xdist
+
+Using pytest-xdist is simple. Just add the -n option with the number of threads to run. For example, -n 3 will run tests across three parallel threads.
+
+
+python -m pytest -n 3
+
+Be careful when trying to run tests in parallel though. Test cases must be independent, meaning they cannot share any resources or data. Otherwise, they could collide and cause each other to fail.
+
+Test machines and test environments must also be powerful enough to handle multiple tests for it. If you aren't careful, you may try to run more tests than your system can effectively handle.
+
+pytest-xdist also lets you distribute test execution across multiple machines using SSH or sockets. I won't demo that capability in this course, but you can learn how to do it from the docs.
+
+The last plugin I want to mention by name is pytest-bdd.
+
+BDD stands for Behavior-Driven Development. It's a helpful set of practices for improving team collaboration and test automation. You may have seen BDD test frameworks before if you have heard of Gherkin or of writing tests as "Given-When-Then" scenarios.
+
+Personally, I love BDD, and I'm a huge advocate for its practices because I think it helps teams deliver better value. pytest-bdd is a BDD plugin for pytest. It lets you write test cases in Gherkin feature files ("Given-When-Then" format) and then automate each step using Python functions.
+
+I won't teach how to use pytest-bdd in this course. Instead, I'll refer you to another Test Automation University course, Behavior Driven Python with pytest-bdd. That course provides a deeper explanation of BDD and shows all the ins and outs of the pytest-bdd plugin.
+
+There are tons of pytest plugins publicly available. Most major Python frameworks like Django and Twisted have pytest plugins for smoother test integration. If there's something you want to do with pytest, then there's probably a plugin for it. Just do a quick search online to find out.
+
+However, there may be times when you cannot find a pytest plugin to do something you want. When that happens, don't worry. You can always write your own pytest plugin.
+
+I'll warn you, though: writing a pytest plugin is no small feat! Plugins should address cross-cutting concerns that many testers face. They typically add hooks, fixtures, and command line options.
+
+You'll need to learn more about pytest's inner workings to make good plugins. You'll also need to learn how to package and release your plugin as a Python package if you want to share your plugin with others. If you choose to make your plugin open source, then you'll also need to maintain the project.
+
+Writing a plugin might be overkill. Rather than writing a plugin, you might want to consider simply writing a helper module. Nevertheless, developing and releasing a helpful pytest plugin is a great way to give back to the software community.
+
+Plugins make pytest infinitely extendable. It’s one major advantage pytest has over Python’s basic unittest framework. You can make a plugin for just about anything, and it’s not terribly difficult. For example, if you need to automatically publish test results to a test case management system, you could write a plugin that uploads results as soon as each test is complete. Let your imagination run wild!

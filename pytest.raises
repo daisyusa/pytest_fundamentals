@@ -1,0 +1,13 @@
+
+# Handling expected exceptions: pytest.raises.
+
+def test_divide_by_zero():
+  with pytest.raises(ZeroDivisionError) as e:
+    num = 1 / 0
+
+  assert 'division by zero' in str(e.value)
+
+In Python, with is a special statement for automatically handling extra "enter" and "exit" logic for a caller. 
+It is most commonly used for file input and output.
+However, f or pytest.raises, the "enter" logic makes the code catch any exceptions, and the "exit" logic asserts
+if the desired exception type was actually raised.

@@ -1,0 +1,125 @@
+API testing isn’t the only type of black box testing that pytest can handle. In fact, pytest can handle any sort of functional testing, including web UI testing. Modern web apps are incredibly rich in features, which means they have several points of failure that need test coverage.
+
+In this chapter, we will learn how to automate web UI tests in pytest with Playwright, a relatively new browser automation tool from Microsoft. Playwright can perform any kind of interaction with the browser, such as clicking elements and scraping text. It provides built-in waiting for all its interactions, so you don’t need to worry about flaky tests. It also runs super fast – much faster than other browser automation tools like Selenium and Cypress.
+
+Let’s see how it’s done!
+
+To set up Playwright, we need to install the playwright package:
+
+
+pip install playwright
+
+Playwright also has a pytest plugin that provides helpful fixtures and command line options:
+
+
+pip install pytest-playwright
+
+Then, we need to install the browser projects. Playwright takes a unique approach to browsers. Instead of testing full browsers like Chrome, Firefox, and Safari, it tests the corresponding browser engines: Chromium, Firefox (Gecko), and WebKit.
+
+Thankfully, Playwright manages its browsers for us. All we need to do is run playwright install:
+
+
+playwright install
+
+This command needs to download hundreds of megabytes, so it might take a while if you have a slow Internet connection when running it for the first time.
+
+Also, note that Playwright can optionally test the full browsers of Google Chrome and Microsoft Edge using browser channels.
+
+Playwright takes a unique approach to browser setup. Instead of launching a new browser instance for each test, it uses one browser instance for all tests in the suite. Each test then creates a unique browser context within the browser instance, which is like an incognito session within the browser. It is very fast to create and destroy – much faster than a full browser instance.
+
+One browser instance may simultaneously have multiple contexts. Each context keeps its own cookies and session storage, so contexts are independent of each other. Each context may also have multiple pages or tabs open at any given time.
+
+Contexts also enable scalable parallel execution. We could easily run tests in parallel with the same browser instance because each context is isolated.
+
+Let’s come up with a simple web test to automate with Playwright. Here is a demo bank app from Applitools hosted at https://demo.applitools.com/.
+
+We can create a basic login test that follows the Arrange-Act-Assert pattern:
+
+The Arrange step is to load the page.
+The Act step is to perform login by entering a username and password and clicking “Sign in.” For this app, any username and password will work.
+The Assert step is to verify that expected elements appear on the app’s main page. This will be the most complicated part because there are so many elements to check.
+It always helps to manually run a web test before trying to automate it.
+
+Alright, let’s automate this login test! Create a new module under the tests directory named test_ui.py. Inside this module, add the following import statements:
+
+
+import pytest
+import re
+
+from playwright.sync_api import Page, expect
+
+We’ll need to create a new test function. Give it some markers as well:
+
+
+@pytest.mark.ui
+@pytest.mark.acme_bank
+def test_acme_bank_login(page: Page):
+
+Our test function calls the page fixture, which is provided by the Playwright plugin for pytest. (Whew, that’s a lot of p’s!) In Playwright, pretty much all interactions happen through a Page object.
+
+For the Arrange step, we need to call page.goto with the target URL:
+
+
+  # Arrange
+  page.goto('https://demo.applitools.com/')
+
+This will load the page.
+
+For the Act step, we need to interact with elements on the page:
+
+
+  # Act
+  page.locator('id=username').fill('andy')
+  page.locator('id=password').fill('i<3pandas')
+  page.locator('id=log-in').click()
+
+In Playwright, we call page.locator with a selector to locate the target element, and then we call interaction methods like fill and click once those elements have been located. Playwright will automatically wait for elements to be ready before sending interactions to them. Proper waiting eliminates flakiness in automation.
+
+We won’t cover web element locators in this course, but if you want to learn how to do it right, check out one of my other TAU courses, Web Element Locator Strategies.
+
+For the Assert step, we need to check that the main page loaded correctly. Now, if you remember, the main page had several elements. In theory, we could try to explicitly check every single one of them, but that would be very tedious to develop, and it would make the test susceptible to breaking if any of those elements changed.
+
+Instead, let’s pick a few of the most important elements on the page and make sure they are visible:
+
+
+  # Assert
+  expect(page.locator('div.logo-w')).to_be_visible()
+  expect(page.locator('ul.main-menu')).to_be_visible()
+  expect(page.get_by_text('Add Account')).to_be_visible()
+  expect(page.get_by_text('Make Payment')).to_be_visible()
+  expect(page.get_by_text('View Statement')).to_be_visible()
+  expect(page.get_by_text('Request Increase')).to_be_visible()
+  expect(page.get_by_text('Pay Now')).to_be_visible()
+
+Playwright uses the expect function to perform assertions instead of Python’s standard assert command. Why? Using expect will make the assertions wait for elements to be ready before checking them. These are called “web-first assertions,” and just like for element interactions, their built-in waiting makes tests less susceptible to flakiness. Playwright also provides several assertion methods for both elements and the page itself, such as the to_be_visible method.
+
+We could write more assertions to check other things, but you get the idea of how to do it from the examples here.
+
+Let’s also not forget that we need to add our two new markers to the pytest.ini config file:
+
+
+[pytest]
+markers =
+  accumulator
+  acme_bank
+  api
+  duckduckgo
+  math
+  ui
+testpaths = tests
+
+That’s our web test! Let’s run it to make sure it works. We’ll use the standard python -m pytest command to run it. I’ll add the path to the new test module so we run only this test.
+
+And just like that, the test passed!
+
+By default, Playwright will run tests headlessly on Chromium. If we want to see the test run, we can add the --headed command line option. We can also add the --slowmo option with a millisecond value to force automation to pause after each interaction. This makes tests easier to watch as they execute in headed mode.
+
+Nice!
+
+You can also do visual testing with Playwright in Python using Applitools. I won’t demo that in this course, but check out the Applitools tutorials to learn how it’s done.
+
+Web UI testing may seem intimidating at first, but with modern tools like Playwright and patterns like Arrange-Act-Assert, they turn out to be just like any other functional tests.
+
+Just be mindful of how many web UI tests you automate. Even though Playwright is fast, web tests are notoriously slow. Their execution time depends primarily on the application under test. More tests means longer test cycles, as well as more maintenance.
+
+Playwright offers several cool features that we didn’t cover in this chapter. There’s a code generation tool that can help you record scripts rather than coding everything yourself. There are trace logs to help you see what your tests are actually doing. Playwright can even perform API calls as well! Be sure to read up on the Playwright docs to see all the cool things it can do.

@@ -1,0 +1,87 @@
+So far in this course, all of our tests have been what we call "unit" tests (or "white box" tests). They directly test code. The math tests exercise Python's math operators, and the Accumulator tests exercise the behaviors of a class we created.
+
+Testing code directly is very important for several reasons. Unit tests are typically small and simple to write. Unit tests catch low-level problems at the source where they're easy to identify and fix. And unit tests run very quickly, meaning you can write several unit tests to maximize coverage.
+
+However, pytest can also handle “black box” tests, which interact directly with a live instance of the software product instead of making calls to product code. These kinds of tests may also be called "integration tests", "end-to-end" tests, "system" tests, “acceptance” tests, or “feature” tests. For example, calling a web service API and loading a web page in a browser would both be examples of black box tests.
+
+API testing is a very common form of integration testing. APIs are “Application Programming Interfaces.” They act like communication channels between entities in a distributed system. Most APIs use HTTP with JSON or XML bodies. APIs can perform Create-Retrieve-Update-Delete operations on top of databases, query status, initiate workflows, and handle just about any other kind of operation you can imagine.
+
+In this chapter, we will write a simple API test using pytest to show that pytest can handle more than just unit tests.
+
+To call APIs in Python, we will use the requests package. requests is one of the most popular Python packages of all time. It provides a simple API for calling APIs.
+
+Please note that the purpose of this chapter is not to teach you how to automate tests for APIs. That topic needs its own course. Instead, this chapter will walk through a very simple API test to show you how it's done using pytest. If you want to learn more about calling APIs in Python, please review the docs for the request package.
+
+We need to install the requests package. Do this by executing the following command from the terminal:
+
+
+pip install requests
+
+After installing requests, we can start writing API tests. We will write a test for the DuckDuckGo Instant Answers API. DuckDuckGo is a popular search engine and its Instant Answer API returns information for search phrases. We will use this API because it is simple to call and verify.
+
+Now, it's time to automate. Let's create a new module named test_api.py in the tests directory.
+
+Add the following import statements:
+
+
+import pytest
+import requests
+
+Then create a test function named test_duckduckgo_instant_answer_api. This test will search a basic phrase and verify parts of the response.
+
+
+def test_duckduckgo_instant_answer_api():
+
+For the "Arrange" steps, set the URL for the request.
+
+The base URL is "api.duckduckgo.com".
+
+The URL needs two query parameters. The first is q for the search phrase. So, let's use "python+programming". The plus sign is a filler for whitespace.
+
+The second parameter is format, which we will set to "json" so that the response comes back in JSON format.
+
+
+  # Arrange
+  url = 'https://api.duckduckgo.com/?q=python+programming&format=json'
+
+For the "Act" steps, the line response = requests.get(url) sends the request as a HTTP GET to the DuckDuckGo Instant Answer API endpoint. It's so concise! This is exactly why people love using the requests package.
+
+Then write a second line, body = response.json(). This will parse the response data from JSON text into a Python dictionary object, which will be useful for validation.
+
+
+  # Act
+  response = requests.get(url)
+  body = response.json()
+
+For the "Assert" steps, write two lines.
+
+First, write assert response.status_code == 200 to verify that the request was successful.
+
+Second, write, assert 'Python' in body ['AbstractText'] to check the actual content of the response.
+
+If the search for Python programming was successful, then the answer given should include the word "Python" somewhere.
+
+
+  # Assert
+  assert response.status_code == 200
+  assert 'Python' in body['AbstractText']
+
+Finally, to keep things consistent, let's add markers for "duckduckgo" and "api".
+
+
+@pytest.mark.duckduckgo
+@pytest.mark.api
+def test_duckduckgo_instant_answer_api():
+
+Let's run this new test to make sure it works:
+
+
+python -m pytest tests/test_api.py
+
+Bam, it works. Notice how it takes a little longer to complete than the unit tests.
+
+The requests package is arguably the simplest way to test APIs in Python. However, there's also a Python extension called Tavern that lets you write APIs using YAML. Definitely check it out if you want to learn more about API testing in Python.
+
+API testing in Python is pretty straightforward. What blows most people away is how concise API test steps can be! There isn’t much bloat to the test code. It just follows the Arrange-Act-Assert pattern with the requests library. pytest handles all the test framework concerns like we’ve learned before.
+
+The test we wrote here is pretty basic, but you can replicate the patterns you learned to write tests for any kind of APIs. If you want to see a more extensive example of API testing with pytest, check out my Device Registry Service project on GitHub. That project shows how to write comprehensive API tests for a much larger web service, including coverage for CRUD operations and security concerns.

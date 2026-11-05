@@ -1,0 +1,142 @@
+In the previous chapter, we learned how to provide command options and config files for pytest. In this chapter, we will take commands even further by learning how to filter test cases when we run them.
+
+Running all tests in a suite is all right when the suite is small, like the one we have built together so far. However, in the real world, test suites can be very large. Suites with hundreds, thousands, and even tens of thousands of test cases are not uncommon for large projects.
+
+Running all tests in a suite isn't always practical, especially when trying to pinpoint or recreate failures. Thankfully, pytest offers easy test filtering. Let’s learn how.
+
+The pytest command can take path arguments to search for tests. When no path arguments are provided (as we have done up to this point), pytest will use the current directory. However, if paths are provided, pytest will search exclusively within the given paths.
+
+For example, if we provide the tests directory, then pytest will still run all of our tests because they all reside in the tests directory.
+
+
+python -m pytest tests
+
+However, if we use the stuff directory, then pytest won't run any tests because it can't find any.
+
+
+python -m pytest stuff
+
+pytest can take paths to directories or modules. For example, if we wanted to run only the Accumulator tests, then we could supply the path, tests/test_accum.py.
+
+
+python -m pytest tests/test_accum.py
+
+Notice how the math tests are excluded. We could also provide multiple paths as arguments and pytest will search everything provided.
+
+pytest can also run individual test case functions. To do this, supply the path to the module, followed by "::" and the test case function name. For example:
+
+
+python -m pytest tests/test_math.py::test_one_plus_one
+
+Again, you can spell out any number of individual tests this way. However, running individual tests adds lots of letters to the command line. I recommend running individual tests only as necessary and preferably one at a time.
+
+Sometimes, you may know a test name (or part of a test name) but you might not know its full module path.
+
+Or, you may want to run all tests that contain a certain token. To filter tests by such expressions, use the -k option. For example:
+
+
+python -m pytest -k one
+
+This command will run all test functions that contain the substring "one".
+
+Notice that it runs tests from both test modules. -k can handle more than substrings. It supports boolean logic with "and", "or", and "not" keywords. For example:
+
+
+python -m pytest -k "one and not accum"
+
+This command will only run tests from the test_math.py module that contains the token "one".
+
+Using -k expressions is very useful for running similar tests across separate modules. However, naming conventions are not always consistent, and -k may be susceptible to false positives. Thankfully, pytest provides one more way to filter tests: markers.
+
+Markers are basically tags for test cases. Any test can have any number of markers. pytest has a few standard markers, but you can add your own custom markers too.
+
+In fact, we've already used markers. @pytest.mark.parameterize is a standard marker!
+
+To add a marker to a test case function, add a @pytest.mark decorator, then add a suffix with a name for the marker. For example, let's add @pytest.mark.math to each of the math tests.
+
+
+@pytest.mark.math
+def test_one_plus_one():
+  assert 1 + 1 == 2
+
+@pytest.mark.math
+def test_one_plus_two():
+  a = 1
+  b = 2
+  c = 3
+  assert a + b == c
+
+@pytest.mark.math
+def test_divide_by_zero():
+  with pytest.raises(ZeroDivisionError) as e:
+    num = 1 / 0
+
+  assert 'division by zero' in str(e.value)
+
+Also, let's add "@pytest.mark.accumulator" to each of the Accumulator tests:
+
+
+@pytest.mark.accumulator
+def test_accumulator_init(accum):
+  assert accum.count == 0
+
+@pytest.mark.accumulator
+def test_accumulator_add_one(accum):
+  accum.add()
+  assert accum.count == 1
+
+@pytest.mark.accumulator
+def test_accumulator_add_three(accum):
+  accum.add(3)
+  assert accum.count == 3
+
+@pytest.mark.accumulator
+def test_accumulator_add_twice(accum):
+  accum.add()
+  accum.add()
+  assert accum.count == 2
+
+@pytest.mark.accumulator
+def test_accumulator_cannot_set_count_directly(accum):
+  with pytest.raises(AttributeError, match=r"can't set attribute") as e:
+    accum.count = 10
+
+Whenever we add custom markers to pytest, we should also add them to the pytest configuration file. Otherwise, pytest will print warning messages.
+
+Open pytest.ini and add two new markers.
+
+
+[pytest]
+markers =
+  accumulator
+  math
+
+Let's run the tests using our markers. Use the -m option and specify the desired marker name.
+
+
+python -m pytest -m math
+
+When the tests run, you'll see that only tests containing the given marker are executed. Nice. You can also use "and", "or", and "not" boolean expressions with -m, just like you could with -k' expressions.
+
+Here are some of pytest's standard markers:
+
+"skip" will skip the test case.
+"skipif" will skip the test case based on a given condition. For example, tests may not be applicable for certain operating systems or Python versions.
+"xfail" will report an expected failure if the test case fails. This helps avoid reporting pollution for known problems.
+"parameterize", which we've already encountered in a previous chapter.
+There's one more thing I'd like to cover regarding test case filtering. By default, pytest will search for test cases either from the current directory or from the paths and options given at the command line. However, setting testpaths in the configuration file will explicitly set test case search paths.
+
+For example, we can set testpaths = tests in our pytest.ini file to make sure that pytest searches only the "tests" folder.
+
+
+[pytest]
+markers =
+  accumulator
+  math
+testpaths = tests
+
+Setting paths is a great way to enforce structure and also speed up discovery time for large projects. As you can see, pytest provides great support for filtering and marking test cases. Use it to your advantage!
+
+Filtering tests is an essential feature for any test framework. Sometimes, you just need to pinpoint a specific test case or module instead of the whole suite. And as a command-line-friendly framework, pytest lets you filter tests in so many ways: by path, by name, and by marker.
+
+Typically, I recommend organizing test modules by feature area first and then adding markers for any other filterable conditions you need. For example, you might want to add markers for specific kinds of tests, like smoke tests or API tests. Do what makes sense for your project.
